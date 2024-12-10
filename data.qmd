@@ -1,5 +1,120 @@
-# Data
+## Technical Description
 
-## Description
+Data for this project comes from the Electric Vehicle Population Data, a
+publicly available dataset from the Washington State Department of
+Licensing. This is a huge set of data about the EV registered with
+Washington State and has the following information:
+
+Vehicle - make and model Type - Battery Electric Vehicle or Plug-in
+Hybrid Electric Vehicle Electric Range Base MSRP\
+Geography - County City of registration
+
+The data set is a treasure trove of information on the EV diffusion
+processes in one of the leading regions of the United States.
+
+Data Collection and Format This information has been collected from
+lists of vehicles that the Washington State Department of Licensing
+maintains. Data is administratively collected through registration and
+updating vehicle lists. The dataset is in CSV format and presents
+210,165 records and 17 variables. The presented dataset combines
+numeric, categorical, and geographic variables.
+
+Update Frequency While frequency is not directly stated, all vehicle
+registration datasets do naturally update with time, as well as with the
+passing of ownership and other changes.
 
 ## Missing value analysis
+
+Known Issues and Limitations The following are issues that were noted
+during exploration:
+
+Missing Values: Some missing values do exist in a few columns, like
+Legislative District, Vehicle Location, and Electric Range. This reduces
+the scope when analyzing some of these variables.
+
+Geographical scope: The given dataset doesn't enable the view on
+nationwide or global views of how electric vehicle adoption is going on;
+it's restricted to Washington State only.
+
+Outdated records: Records may not get updated often, and recent
+registrations or changes may not be reflected.
+
+Data Cleaning: Categorical values or geographic identifiers may have
+inconsistencies that will need cleaning.
+
+Data Import Plan: This is freely downloadable from the Data.gov catalog,
+in CSV format. First, this data was imported into this project using
+Python, where preliminary cleaning and some exploration had been done.
+Later, it would be loaded into R for analysis and visualization. This
+dataset provides a robust foundation for analyzing EV adoption and
+identifying trends, despite its geographic limitations and minor data
+quality issues.
+
+```{r}
+install.packages("dplyr") 
+install.packages("tidyr")
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+ev_data <- read.csv("Electric_Vehicle_Population_Data.csv")
+
+# Calculate the number of missing values for each column
+missing_data <- ev_data %>%
+  summarise(across(everything(), ~ sum(is.na(.)))) %>%
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "MissingValues")
+
+# Create a bar chart with colored bars
+ggplot(missing_data, aes(x = reorder(Variable, -MissingValues), y = MissingValues, fill = MissingValues)) +
+  geom_bar(stat = "identity") +
+  scale_fill_gradient(low = "blue", high = "red") +
+  labs(title = "Missing Values by Variable",
+       x = "Variables",
+       y = "Number of Missing Values") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+Bar Graph: A graph representing the percent of missed values within the
+columns; the worst hit is found in the legislative District. The above
+bar plot quantitatively views the missing data in terms of their
+percentages. The highest rate of missing value is in the Legislative
+District column which is about 0.21%, hence the most affected variable
+in the dataset. Other columns include Vehicle Location, Electric Range,
+and Base MSRP. These all contain very few missing values, under 0.01%,
+and are relatively complete, probably without a huge effect on the
+analysis. Overall, this data is pretty complete; there are only a few
+columns in the entire set with missing information.
+
+```{r}
+library(reshape2)
+
+# Create a binary missing value matrix (1 for missing, 0 for not missing)
+missing_matrix <- as.data.frame(is.na(ev_data))
+missing_matrix <- cbind(Row = 1:nrow(missing_matrix), missing_matrix)
+
+# Melt the data for ggplot
+missing_long <- melt(missing_matrix, id.vars = "Row")
+
+# Create the heatmap
+ggplot(missing_long, aes(x = variable, y = Row, fill = value)) +
+  geom_tile() +
+  scale_fill_manual(values = c("red", "black"), labels = c("Not Missing", "Missing")) +
+  labs(title = "Heatmap of Missing Values",
+       x = "Variables",
+       y = "Rows",
+       fill = "Missing") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+
+The following heatmap shows the pattern of missing values across the
+dataset. Each vertical band here represents a column, with highlighted
+areas showing missing values. Most of the rows are fully filled, and the
+rest hold few missing values. There is no indication that the missing
+values clustered in rows, which therefore are most likely to be random
+and not related to some particular sub-set of the data. The columns most
+affected-only showing continuous gaps-include the Legislative District.
+This heat map confirms that the missing data points are not pervasive
+and affect only a small subset of the data.
