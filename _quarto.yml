@@ -6,11 +6,11 @@ execute:
   echo: true
 
 book:
-  title: "YOUR PROJECT TITLE"
+  title: "Charged and Ready: Insights into Electric Vehicle Adoption"
   author:
-    - AUTHOR1 (UNI1)
-    - AUTHOR2 (UNI2)
-  repo-url: https://github.com/YOUR_GITHUB_ACCOUNT/REPO_NAME
+    - Iram Kamdar (ik2594)
+    - Varshaa Jerry (vsj2112)
+  repo-url: https://github.com/iramk11/EV_ANALYSIS.git
   date: today
   page-footer:
     right: |
