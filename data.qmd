@@ -51,8 +51,8 @@ identifying trends, despite its geographic limitations and minor data
 quality issues.
 
 ```{r}
-install.packages("dplyr") 
-install.packages("tidyr")
+#install.packages("dplyr") 
+#install.packages("tidyr")
 library(ggplot2)
 library(dplyr)
 library(tidyr)
