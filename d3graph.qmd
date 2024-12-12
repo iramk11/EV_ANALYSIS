@@ -1,13 +1,31 @@
-# Interactive graph
+---
+title: "Interactive Scatterplot of EV Data"
+format: html
+resources:
+  - scripts/myscript.js
+  - ev_data.csv
+---
 
-<style>
-  * {
-    font-family: sans-serif;
-  }
-</style> 
+## Interactive Scatterplot
 
-<div id="plot">
+### Instructions:
+1. Use the dropdown menu to filter by Electric Vehicle (EV) Type.
+2. Hover over the dots to see detailed information about each vehicle, including make, model, and CAFV eligibility status.
+
+<div>
+  <label for="ev-type">Filter by EV Type:</label>
+  <select id="ev-type">
+    <option value="All">All</option>
+    <option value="Battery Electric Vehicle (BEV)">Battery Electric Vehicle (BEV)</option>
+    <option value="Plug-in Hybrid Electric Vehicle (PHEV)">Plug-in Hybrid Electric Vehicle (PHEV)</option>
+    
+  </select>
 </div>
 
+<div id="scatterplot"></div>
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-<script src="scripts/myscript.js"></script>
+<script src="https://unpkg.com/topojson-client@3"></script>
+<script src="/scripts/myscript.js"></script>
+
+
+

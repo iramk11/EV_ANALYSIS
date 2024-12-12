@@ -1,1 +1,283 @@
 # Results
+```{r}
+library(ggplot2)
+library(dplyr)
+library(RColorBrewer)
+library(viridis)
+library(sf)         # For spatial data
+
+```
+```{r}
+ev_data <- read.csv("Electric_Vehicle_Population_Data.csv")
+summary(ev_data)
+
+```
+```{r}
+#install.packages("tigris")
+library(tigris)
+```
+
+```{r}
+# Load spatial data for Washington counties
+# Fetch shapefile for Washington State counties
+wa_counties <- counties(state = "WA", cb = TRUE, year = 2022)
+str(wa_counties)
+
+
+# Aggregate EV registrations by county
+county_ev_counts <- ev_data %>%
+  group_by(County) %>%
+  summarize(EV_Count = n())
+
+```
+
+
+```{r}
+library(RColorBrewer)
+
+# Join spatial data with EV counts
+wa_ev_map <- wa_counties %>%
+  left_join(county_ev_counts, by = c("NAME" = "County"))
+
+# Plot with qualitative color scheme
+ggplot(wa_ev_map) +
+  geom_sf(aes(fill = as.factor(EV_Count))) +  # Convert EV_Count to factor for qualitative mapping
+  geom_sf_text(aes(label = NAME), size = 2) +
+  scale_fill_brewer(palette = "Set3", na.value = "grey50") +  # Set3 is suitable for many categories
+  labs(title = "EV Registrations by County in Washington State",
+       fill = "EV Count (Categories)") +
+  theme_minimal(base_size = 14) +
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        panel.grid = element_blank())
+
+
+```
+```{r}
+str(ev_data)
+dim(ev_data)
+```
+
+```{r}
+colnames(ev_data)
+
+```
+```{r}
+colSums(is.na(ev_data))
+
+```
+
+```{r}
+sapply(ev_data, class)
+
+```
+
+
+```{r}
+
+library(ggplot2)
+library(dplyr)
+
+# Aggregate EV counts by make and calculate percentages
+make_contribution <- ev_data %>%
+  group_by(Make) %>%
+  summarize(Total_EVs = n()) %>%
+  arrange(desc(Total_EVs)) %>%
+  mutate(Percentage = Total_EVs / sum(Total_EVs) * 100)
+
+# Filter for the top 10 makes only
+top_10_makes <- make_contribution %>%
+  slice_max(Total_EVs, n = 10)
+
+# Plot for top 10 makes with a qualitative color scheme
+ggplot(top_10_makes, aes(x = "", y = Percentage, fill = Make)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar("y", start = 0) +  # Circular format (like a pie chart)
+  scale_fill_brewer(palette = "Set3") +  # Use a qualitative color scheme
+  labs(title = "Top 10 Make Contribution to Total EVs",
+       subtitle = "Proportional representation of EV market share by make",
+       fill = "Make") +
+  theme_minimal() +
+  theme(axis.text.x = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank())
+
+
+ggplot(top_10_makes, aes(x = reorder(Make, -Total_EVs), y = Percentage, fill = Make)) +
+  geom_bar(stat = "identity") +
+  scale_fill_brewer(palette = "Set3") +
+  labs(title = "Make Contribution to Total EVs",
+       x = "Make",
+       y = "Percentage of Total EVs",
+       fill = "Make") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+```{r}
+# Ensure Electric.Range is numeric
+ev_data$Electric.Range <- as.numeric(ev_data$Electric.Range)
+
+# Filter for valid data
+ev_filtered <- ev_data %>%
+  filter(!is.na(Electric.Range) & Electric.Range > 0 & Model.Year >= 2010)
+
+
+ggplot(ev_filtered, aes(x = as.factor(Model.Year), y = Electric.Range, color = as.factor(Model.Year))) +
+  geom_jitter(alpha = 0.5, width = 0.2) +
+  scale_color_viridis_d(option = "plasma") +
+  labs(
+    title = "Battery Range Distribution Across Model Years",
+    x = "Model Year",
+    y = "Electric Range (miles)",
+    color = "Model Year"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+```{r}
+
+# Filter data for valid electric range and non-missing counties
+ev_filtered <- ev_data %>%
+  filter(!is.na(Electric.Range) & Electric.Range > 0 & !is.na(Make))
+
+# Aggregate data by County and Electric Vehicle Type
+make_evtype_summary <- ev_filtered %>%
+  group_by(Make, Electric.Vehicle.Type) %>%
+  summarize(Average_Range = mean(Electric.Range), .groups = "drop")
+
+# Create Cleveland dot plot
+ggplot(make_evtype_summary, aes(x = Average_Range, y = Make, color = Electric.Vehicle.Type)) +
+  geom_point(size = 3, shape = 16) +  # Dot plot
+  geom_segment(aes(x = 0, xend = Average_Range, y = Make, yend = Make), color = "gray") +  # Horizontal lines
+  facet_wrap(~ Electric.Vehicle.Type, scales = "free_y") +  # Faceting by EV Type
+  labs(
+    title = "Cleveland Dot Plot: Average Electric Range by Make",
+    subtitle = "Faceted by Electric Vehicle Type (BEV vs. PHEV)",
+    x = "Average Electric Range (miles)",
+    y = "County"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+```{r}
+library(ggplot2)
+library(ggalluvial)
+library(dplyr)
+
+# Categorize Electric Range and Base MSRP
+ev_data <- ev_data %>%
+  mutate(
+    Range_Category = case_when(
+      Electric.Range <= 50 ~ "0-50",
+      Electric.Range <= 100 ~ "51-100",
+      Electric.Range <= 200 ~ "101-200",
+      Electric.Range > 200 ~ "200+",
+      TRUE ~ "Unknown"
+    ),
+    MSRP_Category = case_when(
+      Base.MSRP <= 30000 ~ "Under $30k",
+      Base.MSRP <= 60000 ~ "$30k-$60k",
+      Base.MSRP > 60000 ~ "Above $60k",
+      TRUE ~ "Unknown"
+    )
+  )
+
+# Filter and group data
+alluvial_data <- ev_data %>%
+  filter(!is.na(Clean.Alternative.Fuel.Vehicle..CAFV..Eligibility)) %>%
+  group_by(
+    Clean.Alternative.Fuel.Vehicle..CAFV..Eligibility,
+    Electric.Vehicle.Type,
+    Range_Category,
+    MSRP_Category
+  ) %>%
+  summarize(Total = n(), .groups = "drop")
+
+# Create improved alluvial plot
+ggplot(alluvial_data,
+       aes(
+         y = Total,
+         axis1 = Clean.Alternative.Fuel.Vehicle..CAFV..Eligibility,
+         axis2 = Electric.Vehicle.Type,
+         axis3 = Range_Category,
+         axis4 = MSRP_Category
+       )) +
+  geom_alluvium(aes(fill = Clean.Alternative.Fuel.Vehicle..CAFV..Eligibility), alpha = 0.8) +
+  geom_stratum() +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum)), size = 3, hjust = 0.5) +
+  scale_fill_manual(values = c(
+    "Clean Alternative Fuel Vehicle Eligible" = "green",
+    "Eligibility unknown as battery range has not been researched" = "yellow",
+    "Not eligible due to low battery range" = "red"
+  )) +
+  labs(
+    title = "Improved Alluvial Diagram of EV Attributes and CAFV Eligibility",
+    subtitle = "Visualizing relationships between key EV attributes",
+    y = "Number of Vehicles",
+    x = "Attributes",
+    fill = "CAFV Eligibility"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 10),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "bottom",
+    panel.grid = element_blank()
+  )
+
+
+```
+
+```{r}
+library(tigris)
+library(sf)
+library(dplyr)
+library(tmap)
+
+# Enable caching for tigris
+options(tigris_use_cache = TRUE)
+
+# Get Washington counties shapefile
+wa_counties <- counties(state = "WA", cb = TRUE, year = 2022)
+
+# Ensure dplyr is loaded and use count
+county_data <- ev_data %>%
+  dplyr::count(County, name = "Charging_Stations")
+
+# Merge spatial and charging station data
+merged_data <- wa_counties %>%
+  left_join(county_data, by = c("NAME" = "County"))
+
+# Replace NA values
+merged_data <- merged_data %>%
+  mutate(Charging_Stations = ifelse(is.na(Charging_Stations), 0, Charging_Stations))
+
+# Create the interactive map
+tmap_mode("view")
+tm_shape(merged_data) +
+  tm_polygons(
+    "Charging_Stations",
+    title = "EV Charging Stations",
+    id = "NAME",
+    popup.vars = c("County Name" = "NAME", "Charging Stations" = "Charging_Stations"),
+    palette = "Blues"
+  ) +
+  tm_layout(
+    title = "Interactive Map of EV Charging Stations in Washington State",
+    legend.outside = TRUE
+  )
+
+
+```
+```{r}
+  # Install the package
+library(tigris)             # Load the package
+
+```
+
