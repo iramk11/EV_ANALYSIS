@@ -1,4 +1,5 @@
 # Results
+<<<<<<< HEAD
 ```{r}
 library(ggplot2)
 library(dplyr)
@@ -229,11 +230,173 @@ ggplot(alluvial_data,
     axis.text.x = element_text(angle = 45, hjust = 1),
     legend.position = "bottom",
     panel.grid = element_blank()
+=======
+
+---
+title: "Results"
+format: html 
+---
+
+```{r}
+# Load necessary library
+library(ggplot2)
+library(dplyr)
+ev_data <- read.csv("Electric_Vehicle_Population_Data.csv")
+```
+
+Which vehicle manufacturers are the most popular among electric vehicle registrations in the state of Washington?
+
+```{r}
+# Bar Chart of Vehicle Make Distribution
+ggplot(ev_data, aes(x = reorder(Make, -table(Make)[Make]))) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Distribution of EVs by Vehicle Make",
+       x = "Vehicle Make",
+       y = "Number of Registrations") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+This bar graph shows how highly concentrated the structure of EVs' registrations is by the manufacturer. Tesla stands out in this lineup, with a very large difference in the count of its registrations compared to the others, showing how it leads the electric vehicle market. Other brands, such as Chevrolet, Nissan, and Ford, come afterward, with their count of registrations small enough to evidence very small market shares. It also underlines the "long tail" of manufacturers with few registrations, adding to the fragmentation in the rest of the market. Tesla has probably taken this leadership because of its well-established brand reputation, innovative technology, and well-developed charging infrastructure; it could have thus given stimuli for such enormous adoptions. That is to underline how Tesla is central in the EV market and how this can potentially be an opportunity for the rest of the manufacturers to develop their shares.
+
+What is the percentage share of each electric vehicle model among all EV registrations in the dataset?
+
+```{r}
+model_data <- ev_data %>%
+  count(Model, name = "Registrations") %>%
+  arrange(desc(Registrations)) %>%
+  mutate(Percentage = (Registrations / sum(Registrations)) * 100)
+
+top_model_data <- model_data %>%
+  slice_max(order_by = Registrations, n = 10) %>%
+  mutate(Label = paste0(Model, "\n(", round(Percentage, 1), "%)"))
+
+# Create a pie chart with percentages
+ggplot(top_model_data, aes(x = "", y = Registrations, fill = Model)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  geom_text(aes(label = paste0(round(Percentage, 1), "%")), 
+            position = position_stack(vjust = 0.5), size = 2) + 
+  labs(title = "Percentage Share of EV Registrations by Model (Top 10)",
+       x = NULL,
+       y = NULL) +
+  theme_void() +
+  theme(
+    plot.title = element_text(size = 14, hjust = 0.5),
+    legend.position = "right",
+    legend.text = element_text(size = 8))
+
+
+```
+
+The pie chart represents the top 10 vehicle model registrations of electric vehicles represented in this dataset. Hence, it comes out that Tesla Model Y leads the EV market with 21% of EVs registered, followed by Tesla Model 3, which constitutes 15.5%. Both model types contribute pretty high each to account for Tesla's leading position regarding the same. Other prominent models, like the Nissan Leaf with 6.5%, and Ford Mustang Mach-E with 3.7%, have significantly smaller shares, underlining how scattered the market would be if Tesla is excluded.
+
+This graph depicts consumer preference, pointing out Tesla at the top-most position, probably due to technology, performance, and wide networks for charging. Similarly, the presence of other models like Chevrolet Bolt EV and Nissan Leaf indicates competitive effort by other manufacturers to appease a certain segment of the market. This provides a good overview of the general EV adoption that was really leptokurtic-dominated, with a small number of models taking the lion's share of registrations. This will then provide insight into how best to identify opportunities for manufacturers to capture more significant shares of the market.
+
+How have electric vehicle (EV) registrations changed over time?
+
+```{r}
+# Filter out year 2025 and aggregate data by Model Year
+yearly_data <- ev_data %>%
+  filter(Model.Year != 2025) %>% # Exclude year 2025
+  group_by(Model.Year) %>%
+  summarise(Registrations = n()) %>%
+  arrange(Model.Year)
+
+
+ggplot(yearly_data, aes(x = Model.Year, y = Registrations)) +
+  geom_line(color = "blue", size = 1) +
+  geom_point(color = "red", size = 2) +
+  labs(title = "EV Registrations Over Time",
+       x = "Model Year",
+       y = "Number of Registrations") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 14, hjust = 0.5),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10))
+
+
+```
+Above is the line chart showing the trend in electric vehicle registration against time in Washington State, modeled from the years in the given dataset. It was extremely slow before the year 2010, wherein the total number of registrations remained very low. From around 2015, however, there is a definite uptick in the number of registrations probably reflecting huge leaps in technological, infrastructural, and economic viability with respect to EVs, or maybe consumer interest. The sharp spike in registration post-2020 may indicate a surge in EV adoption, probably catalyzed by increased environmental awareness, higher ranges provided by improved batteries, and state or federal incentives that exist for electric vehicles.
+
+As such, a decline follows the peak year represented-2024 in the graph-maybe because of incomplete data from more recent years, disrupted supply chains, or market saturation. This proves how fast the adoption of EVs is taking place in Washington and points to sustained investment in charging infrastructure and supporting policy for maintaining these gains.
+
+
+
+How have the top 5 electric vehicle (EV) makes performed in terms of annual over time? 
+
+```{r}
+time_series_data <- ev_data %>%
+  filter(!is.na(Make) & !is.na(Model.Year) & Model.Year > 0 & Model.Year < 2025) %>% # Exclude 2025
+  count(Make, Model.Year, name = "Count") %>%
+  group_by(Make) %>%
+  summarise(Total = sum(Count)) %>%
+  arrange(desc(Total)) %>%
+  slice(1:5) %>% # Select the top 5 makes by total registrations
+  inner_join(ev_data %>%
+               count(Make, Model.Year, name = "Count"), by = "Make") %>%
+  filter(Model.Year < 2025) %>% # Ensure 2025 is excluded in the joined data
+  arrange(desc(Total), Model.Year)
+
+# Plot the time series
+ggplot(time_series_data, aes(x = Model.Year, y = Count, color = Make, group = Make)) +
+  geom_line(size = 1) +
+  geom_point(size = 2, alpha = 0.7) +
+  labs(
+    title = "Time Series of Top 5 EV Makes Over Time",
+    subtitle = "Tracking the number of EV registrations by year",
+    x = "Model Year",
+    y = "Number of Registrations",
+    color = "Make"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, hjust = 0.5),
+    plot.subtitle = element_text(size = 12, hjust = 0.5),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.title = element_text(size = 12),
+    legend.text = element_text(size = 10)
+  )
+
+```
+The following is a time series plot showing electric vehicle registration by the top five manufacturers, Tesla, Chevrolet, Ford, Nissan, and Kia, over time in Washington State, excluding 2025 data. Tesla is also, by a wide margin, the leading make that sees a significant ramp-up in its registrations from about 2015 and peaks just before 2025. The steep growth trajectory undertaken by Tesla reflects its strong presence in the market and appeal, probably due to innovations and the expanding availability of models. Other leading manufacturers such as Chevrolet and Nissan have revealed a more steady, gradual year-on-year increase in their registrations-a reflection of their persistent contribution to the EV market. The noticeable growth of Ford and Kia in recent years reveals increasing competitiveness and traction in their EVs. Based on this analysis, Tesla dominates the Washington EV market, and emerging competition among other EV manufacturers can be expected as EV adoption expands.
+
+
+
+Which models are most popular for each vehicle manufacturer (make)?
+
+```{r}
+
+heatmap_data <- ev_data %>%
+  count(Make, Model, name = "Registrations") %>%
+  group_by(Make) %>%
+  mutate(TotalByMake = sum(Registrations)) %>%
+  ungroup() %>%
+  arrange(desc(TotalByMake), desc(Registrations)) %>%
+  slice_max(order_by = TotalByMake, n = 30) %>% 
+  slice_max(order_by = Registrations, n = 30, by = Make) 
+
+# Create the heatmap
+ggplot(heatmap_data, aes(x = Make, y = Model, fill = Registrations)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "lightblue", high = "darkblue", name = "Registrations") +
+  labs(title = "Heatmap of Models by Vehicle Make (Top 30)",
+       x = "Vehicle Make",
+       y = "Vehicle Model") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+    axis.text.y = element_text(size = 8),
+    plot.title = element_text(size = 14, hjust = 0.5)
+>>>>>>> 1e229d245aa33127b9c3a0d22d8fed6ae63c5a7a
   )
 
 
 ```
 
+<<<<<<< HEAD
 ```{r}
 library(tigris)
 library(sf)
@@ -271,13 +434,87 @@ tm_shape(merged_data) +
   tm_layout(
     title = "Interactive Map of EV Charging Stations in Washington State",
     legend.outside = TRUE
+=======
+Above is a heat map of the top 30 combinations ranked by registrations, of vehicle makes to models respectively, in Washington State. Tesla creates the most registrations, by far, and the most highly registered models in the Model Y, Model 3, and Model S, represented by the darkest shade of blue. While far from record-breaking, strong performances are also set at Chevrolet, largely propped up by the Bolt EV and Bolt EUV with significant shares of its overall registrations. That beats Ford, whereby the shares contributed from the model series F-150 and Mustang Mach-E really underlined its presence within the truck and SUV segments.
+
+Thus, the map represents the variety within the EV market-for example, Kia by Soul EV, Nissan by Leaf, among others-while Tesla stands out with their small and focused line. The graph illustrates how Tesla absolutely dominates the EV market in Washington, supported by just a few models, whereas other brands hold their positions with a wider car range for various tastes and needs. The chart shows a good understanding of the market dynamics of consumer demand trends in the state.
+
+
+How do the battery ranges of electric vehicles vary across different manufacturers?
+```{r}
+
+# Clean the data: Remove rows with 0 or missing Electric Range
+cleaned_data <- ev_data %>%
+  filter(!is.na(Electric.Range) & Electric.Range > 0)
+
+# Create the boxplot
+ggplot(cleaned_data, aes(x = Make, y = Electric.Range, fill = Make)) +
+  geom_boxplot(outlier.color = "red", outlier.shape = 16, alpha = 0.7) +
+  labs(title = "Boxplot of Battery Range by Make",
+       x = "Vehicle Make",
+       y = "Battery Range (Miles)") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+    axis.title = element_text(size = 12),
+    legend.position = "none", # Remove legend for simplicity
+    plot.title = element_text(size = 14, hjust = 0.5)
+>>>>>>> 1e229d245aa33127b9c3a0d22d8fed6ae63c5a7a
   )
 
 
 ```
+<<<<<<< HEAD
 ```{r}
   # Install the package
 library(tigris)             # Load the package
 
 ```
 
+=======
+
+The boxplot shows the distribution of the battery range over various electric vehicle manufacturers or makes in this dataset. The chart hints at large variability amongst the different manufacturers in this market, though a few continuously set higher standards. Tesla leads, it appears, with quite a large spread in the long-range EV category-mostly because it has focused on the premium segments of high-end models. Audi and Porsche are at relatively high median positions, too, witness the presence of electric luxury vehicles.
+
+By contrast, the other manufacturers-Fiat, MINI, and Mitsubishi-return fairly short ranges; doubtless, these will be priced to appeal to thrifty buyers or urban-limited EV range needs. The red outliers are rarely used models running much higher or lower for each brand. This plot underlines the heterogeneity in the EV market, with different manufacturers targeting different segments, everything from high range and high performance to more economic and city-centric options. This will help determine how range can become one of the differentiating factors among the EV brands for helping in consumer preference and market positioning.
+
+How are EV charging stations distributed across counties in the dataset?
+
+```{r}
+
+top_counties <- ev_data %>%
+  count(County, name = "Charging_Stations") %>%
+  arrange(desc(Charging_Stations)) %>%
+  slice_max(order_by = Charging_Stations, n = 10) 
+
+# Create the bar chart
+ggplot(top_counties, aes(x = reorder(County, -Charging_Stations), y = Charging_Stations, fill = County)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Top 10 Counties by Number of EV Charging Stations",
+       x = "County",
+       y = "Number of Charging Stations") +
+  scale_fill_brewer(palette = "Paired") + 
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 10), 
+    axis.title = element_text(size = 12),
+    plot.title = element_text(size = 14, hjust = 0.5),
+    legend.position = "none" 
+  )
+
+
+```
+
+The following bar chart represents the number of electric vehicle-charging stations across the state of Washington, focusing on the top 10 counties. Against the rest of the counties, King County stands at a very high level regarding the number of charging stations, very telling about its centrality with respect to this issue. The rest, in order of numbers, are Snohomish and Pierce counties, though their totals are far fewer, meaning infrastructure in highly urbanized, densely populated areas is concentrated. In the middle-range counties, there is Clark, Thurston, and Kitsap. Spokane, Whatcom, Benton, and Skagit complete the top 10, but their contribution becomes disproportionately smaller compared to the previous ones.
+
+The above visualization highlights the disparities that exist geographically in the state's EV charging infrastructure. King County's preeminence speaks to its urban nature and likely higher rates of EV adoption, favored by both government incentives and private investment. For this project, understanding this distribution is important in identifying areas that are not well served and should factor into an expansion strategy of the EV charging network. These disparities, if addressed, can facilitate broader EV adoption and support statewide sustainability goals.
+
+
+
+
+
+
+
+
+
+
+>>>>>>> 1e229d245aa33127b9c3a0d22d8fed6ae63c5a7a
