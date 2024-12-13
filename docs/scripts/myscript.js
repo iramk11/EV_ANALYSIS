@@ -137,7 +137,7 @@ const backButton = svg.append("text")
 
 // Define color scales
 const colorCategory = d3.scaleOrdinal(["#F8766D", "#00BFC4"]);
-const colorMakes = d3.scaleOrdinal(d3.schemeTableau10);
+const colorMakes = d3.scaleOrdinal(d3.schemeSet3);
 
 // Pie generator
 const pie = d3.pie().value(d => d.value).sort(null);
