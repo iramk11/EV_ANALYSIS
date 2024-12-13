@@ -1,28 +1,34 @@
 # Results
-<<<<<<< HEAD
 ```{r}
-library(ggplot2)
-library(dplyr)
-library(RColorBrewer)
-library(viridis)
-library(sf)         # For spatial data
+suppressPackageStartupMessages({
+  library(ggplot2)
+  library(dplyr)
+  library(RColorBrewer)
+  library(viridis)
+  library(sf)    
+  library(tigris)
+  library(ggplot2)
+ library(ggalluvial)
+ library(dplyr)
+  library(RColorBrewer)
+
+})
+   # For spatial data
 
 ```
 ```{r}
 ev_data <- read.csv("Electric_Vehicle_Population_Data.csv")
-summary(ev_data)
+
 
 ```
-```{r}
-#install.packages("tigris")
-library(tigris)
-```
+
+
 
 ```{r}
 # Load spatial data for Washington counties
 # Fetch shapefile for Washington State counties
 wa_counties <- counties(state = "WA", cb = TRUE, year = 2022)
-str(wa_counties)
+
 
 
 # Aggregate EV registrations by county
@@ -32,21 +38,39 @@ county_ev_counts <- ev_data %>%
 
 ```
 
-
+**Which counties in Washington state have the highest and lowest concentrations of EV registrations?**
 ```{r}
-library(RColorBrewer)
 
-# Join spatial data with EV counts
+# Generate qualitative color mapping based on EV_Count categories
 wa_ev_map <- wa_counties %>%
   left_join(county_ev_counts, by = c("NAME" = "County"))
 
+# Create EV count categories
+wa_ev_map <- wa_ev_map %>%
+  mutate(EV_Category = case_when(
+    EV_Count >= 10000 ~ "Very High",
+    EV_Count >= 5000 ~ "High",
+    EV_Count >= 1000 ~ "Moderate",
+    EV_Count >= 100 ~ "Low",
+    TRUE ~ "Very Low"
+  ))
+
+# Define custom qualitative color palette
+color_palette <- c(
+  "Very High" = "#D73027",
+  "High" = "#FC8D59",
+  "Moderate" = "#FEE08B",
+  "Low" = "#D9EF8B",
+  "Very Low" = "#91CF60"
+)
+
 # Plot with qualitative color scheme
 ggplot(wa_ev_map) +
-  geom_sf(aes(fill = as.factor(EV_Count))) +  # Convert EV_Count to factor for qualitative mapping
+  geom_sf(aes(fill = EV_Category)) +  # Use EV_Category for fill
   geom_sf_text(aes(label = NAME), size = 2) +
-  scale_fill_brewer(palette = "Set3", na.value = "grey50") +  # Set3 is suitable for many categories
+  scale_fill_manual(values = color_palette, na.value = "grey50") +  # Apply custom palette
   labs(title = "EV Registrations by County in Washington State",
-       fill = "EV Count (Categories)") +
+       fill = "EV Categories") +
   theme_minimal(base_size = 14) +
   theme(axis.text = element_blank(),
         axis.title = element_blank(),
@@ -54,25 +78,9 @@ ggplot(wa_ev_map) +
 
 
 ```
-```{r}
-str(ev_data)
-dim(ev_data)
-```
+The geographic distribution of electric vehicle (EV) registrations in Washington State highlights a stark contrast between urban and rural counties. King County dominates with the highest registrations, followed by Snohomish and Pierce counties, reflecting the concentration of EV adoption in urban and suburban areas where infrastructure, population density, and access to charging stations are more favorable. In contrast, rural counties like Lincoln and Adams have significantly fewer registrations, underscoring the need for improved charging infrastructure and targeted incentives to promote adoption in these areas. This visualization emphasizes the critical role of equitable infrastructure expansion to ensure that EV adoption benefits all communities across the state.
 
-```{r}
-colnames(ev_data)
-
-```
-```{r}
-colSums(is.na(ev_data))
-
-```
-
-```{r}
-sapply(ev_data, class)
-
-```
-
+**What is the relative contribution of the top EV makes to the total electric vehicle market in Washington State?**
 
 ```{r}
 
@@ -90,18 +98,6 @@ make_contribution <- ev_data %>%
 top_10_makes <- make_contribution %>%
   slice_max(Total_EVs, n = 10)
 
-# Plot for top 10 makes with a qualitative color scheme
-ggplot(top_10_makes, aes(x = "", y = Percentage, fill = Make)) +
-  geom_bar(stat = "identity", width = 1) +
-  coord_polar("y", start = 0) +  # Circular format (like a pie chart)
-  scale_fill_brewer(palette = "Set3") +  # Use a qualitative color scheme
-  labs(title = "Top 10 Make Contribution to Total EVs",
-       subtitle = "Proportional representation of EV market share by make",
-       fill = "Make") +
-  theme_minimal() +
-  theme(axis.text.x = element_blank(),
-        axis.ticks = element_blank(),
-        panel.grid = element_blank())
 
 
 ggplot(top_10_makes, aes(x = reorder(Make, -Total_EVs), y = Percentage, fill = Make)) +
@@ -113,9 +109,13 @@ ggplot(top_10_makes, aes(x = reorder(Make, -Total_EVs), y = Percentage, fill = M
        fill = "Make") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-
 ```
+
+
+The graph illustrates the contribution of different car manufacturers to the total electric vehicle (EV) market, with Tesla overwhelmingly leading at over 40% of the total share. This dominance reflects Tesla's early entry into the EV market, innovative technology, and strong brand recognition. Other manufacturers like Chevrolet, Nissan, and Ford follow at much smaller shares, indicating growing but still limited competition. Notably, legacy automakers such as Toyota and Volkswagen hold minimal shares, highlighting the lag in transitioning to EVs. The disparity underscores Tesla's market leadership while pointing to opportunities for other manufacturers to expand their EV offerings and capture a larger market share as consumer demand for sustainable transportation continues to rise.
+
+
+**How has the battery range of electric vehicles evolved across different model years in Washington State?**
 ```{r}
 # Ensure Electric.Range is numeric
 ev_data$Electric.Range <- as.numeric(ev_data$Electric.Range)
@@ -139,6 +139,11 @@ ggplot(ev_filtered, aes(x = as.factor(Model.Year), y = Electric.Range, color = a
 
 
 ```
+
+It is a scatter of the ranges of electric vehicle batteries, in miles, over various model years in Washington State. There is, therefore, an apparent trend from the graph where the ranges have increased over the years; the older model years are always below 150 miles-for example, the 2010-2015 model years-whereas the newer model years, say 2020-2024, have heavy concentrations of values over 200 miles. This reflects both the advance in battery technology and the efforts of manufacturers to meet consumer demands for longer-range EVs. The wide spread in the ranges for recent years points as well to greater market diversity with options tailored to appeal to economy and performance-minded buyers. The visualization underlines how EV technology has moved fast, providing important insights into how the industry is working to extend its range capabilities.
+
+
+**How does the average electric range of vehicles vary by make, and how do Battery Electric Vehicles (BEVs) compare to Plug-in Hybrid Electric Vehicles (PHEVs) across different manufacturers?  **
 ```{r}
 
 # Filter data for valid electric range and non-missing counties
@@ -166,85 +171,10 @@ ggplot(make_evtype_summary, aes(x = Average_Range, y = Make, color = Electric.Ve
 
 
 ```
-```{r}
-library(ggplot2)
-library(ggalluvial)
-library(dplyr)
+Below is the Cleveland dot plot of average electric range for the vehicles by manufacturer, faceted by Electric Vehicle Type: BEV versus PHEV. Among BEVs, Tesla has one of the largest averages of any manufacturer given its focus on long-range EV models of late. Other manufacturers offering competitive ranges include Porsche and Polestar, but these are rather more niche players. While PHEVs have comparatively much smaller average ranges, given that they are driven by the dual sources of electric and gasoline. In contrast, companies that emphasize PHEVs more as a luxury offering, such as Audi, BMW, and Volvo, all have shorter driving ranges compared to their BEV options. That, in a nutshell, is the technological difference between BEVs and PHEVs, with insight into how manufactures position themselves in the EV market: BEVs for long-distance drivers and PHEVs for hybrid needs.
 
-# Categorize Electric Range and Base MSRP
-ev_data <- ev_data %>%
-  mutate(
-    Range_Category = case_when(
-      Electric.Range <= 50 ~ "0-50",
-      Electric.Range <= 100 ~ "51-100",
-      Electric.Range <= 200 ~ "101-200",
-      Electric.Range > 200 ~ "200+",
-      TRUE ~ "Unknown"
-    ),
-    MSRP_Category = case_when(
-      Base.MSRP <= 30000 ~ "Under $30k",
-      Base.MSRP <= 60000 ~ "$30k-$60k",
-      Base.MSRP > 60000 ~ "Above $60k",
-      TRUE ~ "Unknown"
-    )
-  )
 
-# Filter and group data
-alluvial_data <- ev_data %>%
-  filter(!is.na(Clean.Alternative.Fuel.Vehicle..CAFV..Eligibility)) %>%
-  group_by(
-    Clean.Alternative.Fuel.Vehicle..CAFV..Eligibility,
-    Electric.Vehicle.Type,
-    Range_Category,
-    MSRP_Category
-  ) %>%
-  summarize(Total = n(), .groups = "drop")
-
-# Create improved alluvial plot
-ggplot(alluvial_data,
-       aes(
-         y = Total,
-         axis1 = Clean.Alternative.Fuel.Vehicle..CAFV..Eligibility,
-         axis2 = Electric.Vehicle.Type,
-         axis3 = Range_Category,
-         axis4 = MSRP_Category
-       )) +
-  geom_alluvium(aes(fill = Clean.Alternative.Fuel.Vehicle..CAFV..Eligibility), alpha = 0.8) +
-  geom_stratum() +
-  geom_text(stat = "stratum", aes(label = after_stat(stratum)), size = 3, hjust = 0.5) +
-  scale_fill_manual(values = c(
-    "Clean Alternative Fuel Vehicle Eligible" = "green",
-    "Eligibility unknown as battery range has not been researched" = "yellow",
-    "Not eligible due to low battery range" = "red"
-  )) +
-  labs(
-    title = "Improved Alluvial Diagram of EV Attributes and CAFV Eligibility",
-    subtitle = "Visualizing relationships between key EV attributes",
-    y = "Number of Vehicles",
-    x = "Attributes",
-    fill = "CAFV Eligibility"
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text.y = element_text(size = 10),
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    legend.position = "bottom",
-    panel.grid = element_blank()
-=======
-
----
-title: "Results"
-format: html 
----
-
-```{r}
-# Load necessary library
-library(ggplot2)
-library(dplyr)
-ev_data <- read.csv("Electric_Vehicle_Population_Data.csv")
-```
-
-Which vehicle manufacturers are the most popular among electric vehicle registrations in the state of Washington?
+**Which vehicle manufacturers are the most popular among electric vehicle registrations in the state of Washington?**
 
 ```{r}
 # Bar Chart of Vehicle Make Distribution
@@ -260,7 +190,7 @@ ggplot(ev_data, aes(x = reorder(Make, -table(Make)[Make]))) +
 
 This bar graph shows how highly concentrated the structure of EVs' registrations is by the manufacturer. Tesla stands out in this lineup, with a very large difference in the count of its registrations compared to the others, showing how it leads the electric vehicle market. Other brands, such as Chevrolet, Nissan, and Ford, come afterward, with their count of registrations small enough to evidence very small market shares. It also underlines the "long tail" of manufacturers with few registrations, adding to the fragmentation in the rest of the market. Tesla has probably taken this leadership because of its well-established brand reputation, innovative technology, and well-developed charging infrastructure; it could have thus given stimuli for such enormous adoptions. That is to underline how Tesla is central in the EV market and how this can potentially be an opportunity for the rest of the manufacturers to develop their shares.
 
-What is the percentage share of each electric vehicle model among all EV registrations in the dataset?
+***What is the percentage share of each electric vehicle model among all EV registrations in the dataset?**
 
 ```{r}
 model_data <- ev_data %>%
@@ -291,10 +221,10 @@ ggplot(top_model_data, aes(x = "", y = Registrations, fill = Model)) +
 ```
 
 The pie chart represents the top 10 vehicle model registrations of electric vehicles represented in this dataset. Hence, it comes out that Tesla Model Y leads the EV market with 21% of EVs registered, followed by Tesla Model 3, which constitutes 15.5%. Both model types contribute pretty high each to account for Tesla's leading position regarding the same. Other prominent models, like the Nissan Leaf with 6.5%, and Ford Mustang Mach-E with 3.7%, have significantly smaller shares, underlining how scattered the market would be if Tesla is excluded.
-
 This graph depicts consumer preference, pointing out Tesla at the top-most position, probably due to technology, performance, and wide networks for charging. Similarly, the presence of other models like Chevrolet Bolt EV and Nissan Leaf indicates competitive effort by other manufacturers to appease a certain segment of the market. This provides a good overview of the general EV adoption that was really leptokurtic-dominated, with a small number of models taking the lion's share of registrations. This will then provide insight into how best to identify opportunities for manufacturers to capture more significant shares of the market.
 
-How have electric vehicle (EV) registrations changed over time?
+
+**How have electric vehicle (EV) registrations changed over time?**
 
 ```{r}
 # Filter out year 2025 and aggregate data by Model Year
@@ -325,7 +255,7 @@ As such, a decline follows the peak year represented-2024 in the graph-maybe bec
 
 
 
-How have the top 5 electric vehicle (EV) makes performed in terms of annual over time? 
+**How have the top 5 electric vehicle (EV) makes performed in terms of annual over time? **
 
 ```{r}
 time_series_data <- ev_data %>%
@@ -365,7 +295,7 @@ The following is a time series plot showing electric vehicle registration by the
 
 
 
-Which models are most popular for each vehicle manufacturer (make)?
+**Which models are most popular for each vehicle manufacturer (make)?**
 
 ```{r}
 
@@ -390,13 +320,13 @@ ggplot(heatmap_data, aes(x = Make, y = Model, fill = Registrations)) +
     axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
     axis.text.y = element_text(size = 8),
     plot.title = element_text(size = 14, hjust = 0.5)
->>>>>>> 1e229d245aa33127b9c3a0d22d8fed6ae63c5a7a
+
   )
 
 
 ```
 
-<<<<<<< HEAD
+**What factors might be contributing to the significant variation in EV adoption rates across different counties in Washington State, and what targeted strategies could be implemented to encourage higher adoption in rural areas?**
 ```{r}
 library(tigris)
 library(sf)
@@ -406,41 +336,50 @@ library(tmap)
 # Enable caching for tigris
 options(tigris_use_cache = TRUE)
 
-# Get Washington counties shapefile
+# Load the dataset (replace 'ev_data.csv' with the path to your dataset)
+ev_data <- read.csv("ev_data.csv")
+
+# Count the number of EVs per county
+county_ev_counts <- ev_data %>%
+  group_by(County, State) %>%
+  summarise(EV_Count = n(), .groups = "drop")
+
+# Filter for a specific state (e.g., Washington)
+wa_ev_counts <- county_ev_counts %>%
+  filter(State == "WA")
+
+# Get shapefile for Washington counties
 wa_counties <- counties(state = "WA", cb = TRUE, year = 2022)
 
-# Ensure dplyr is loaded and use count
-county_data <- ev_data %>%
-  dplyr::count(County, name = "Charging_Stations")
+# Merge EV data with county spatial data
+wa_ev_map <- wa_counties %>%
+  left_join(wa_ev_counts, by = c("NAME" = "County"))
 
-# Merge spatial and charging station data
-merged_data <- wa_counties %>%
-  left_join(county_data, by = c("NAME" = "County"))
-
-# Replace NA values
-merged_data <- merged_data %>%
-  mutate(Charging_Stations = ifelse(is.na(Charging_Stations), 0, Charging_Stations))
+# Replace NA values with 0 for counties with no EV data
+wa_ev_map <- wa_ev_map %>%
+  mutate(EV_Count = ifelse(is.na(EV_Count), 0, EV_Count))
 
 # Create the interactive map
 tmap_mode("view")
-tm_shape(merged_data) +
+tm_shape(wa_ev_map) +
   tm_polygons(
-    "Charging_Stations",
-    title = "EV Charging Stations",
+    "EV_Count",
+    title = "EV Adoption Levels",
     id = "NAME",
-    popup.vars = c("County Name" = "NAME", "Charging Stations" = "Charging_Stations"),
+    popup.vars = c("County Name" = "NAME", "EV Count" = "EV_Count"),
     palette = "Blues"
   ) +
   tm_layout(
-    title = "Interactive Map of EV Charging Stations in Washington State",
+    title = "Geographic Distribution of EV Adoption in Washington",
     legend.outside = TRUE
-=======
-Above is a heat map of the top 30 combinations ranked by registrations, of vehicle makes to models respectively, in Washington State. Tesla creates the most registrations, by far, and the most highly registered models in the Model Y, Model 3, and Model S, represented by the darkest shade of blue. While far from record-breaking, strong performances are also set at Chevrolet, largely propped up by the Bolt EV and Bolt EUV with significant shares of its overall registrations. That beats Ford, whereby the shares contributed from the model series F-150 and Mustang Mach-E really underlined its presence within the truck and SUV segments.
+  )
 
-Thus, the map represents the variety within the EV market-for example, Kia by Soul EV, Nissan by Leaf, among others-while Tesla stands out with their small and focused line. The graph illustrates how Tesla absolutely dominates the EV market in Washington, supported by just a few models, whereas other brands hold their positions with a wider car range for various tastes and needs. The chart shows a good understanding of the market dynamics of consumer demand trends in the state.
+```
+The geographic distribution of EV adoption in Washington State, as depicted in the map, highlights significant disparities between counties. King County clearly stands out as the leader in EV registrations, represented by the darkest shade on the color scale. This reflects the county's advanced infrastructure, higher urban population density, and likely greater financial capacity to adopt electric vehicles. Surrounding counties, such as Pierce and Snohomish, show moderate EV adoption, likely benefiting from their proximity to King County and access to shared infrastructure and incentives.
 
+In contrast, the lighter shades in rural counties indicate significantly lower EV adoption levels, which can be attributed to factors such as limited charging station availability, lower population densities, and possibly fewer incentives or awareness campaigns in these areas. The map emphasizes the need for targeted infrastructure development and policy support to encourage EV adoption in less-populated counties, reducing disparities and enhancing statewide sustainability efforts.
 
-How do the battery ranges of electric vehicles vary across different manufacturers?
+**How do the battery ranges of electric vehicles vary across different manufacturers?**
 ```{r}
 
 # Clean the data: Remove rows with 0 or missing Electric Range
@@ -459,32 +398,23 @@ ggplot(cleaned_data, aes(x = Make, y = Electric.Range, fill = Make)) +
     axis.title = element_text(size = 12),
     legend.position = "none", # Remove legend for simplicity
     plot.title = element_text(size = 14, hjust = 0.5)
->>>>>>> 1e229d245aa33127b9c3a0d22d8fed6ae63c5a7a
+
   )
 
-
 ```
-<<<<<<< HEAD
-```{r}
-  # Install the package
-library(tigris)             # Load the package
-
-```
-
-=======
 
 The boxplot shows the distribution of the battery range over various electric vehicle manufacturers or makes in this dataset. The chart hints at large variability amongst the different manufacturers in this market, though a few continuously set higher standards. Tesla leads, it appears, with quite a large spread in the long-range EV category-mostly because it has focused on the premium segments of high-end models. Audi and Porsche are at relatively high median positions, too, witness the presence of electric luxury vehicles.
 
 By contrast, the other manufacturers-Fiat, MINI, and Mitsubishi-return fairly short ranges; doubtless, these will be priced to appeal to thrifty buyers or urban-limited EV range needs. The red outliers are rarely used models running much higher or lower for each brand. This plot underlines the heterogeneity in the EV market, with different manufacturers targeting different segments, everything from high range and high performance to more economic and city-centric options. This will help determine how range can become one of the differentiating factors among the EV brands for helping in consumer preference and market positioning.
 
-How are EV charging stations distributed across counties in the dataset?
+**How are EV charging stations distributed across counties in the dataset?**
 
 ```{r}
 
 top_counties <- ev_data %>%
   count(County, name = "Charging_Stations") %>%
   arrange(desc(Charging_Stations)) %>%
-  slice_max(order_by = Charging_Stations, n = 10) 
+  slice_max(order_by = Charging_Stations, n = 10)
 
 # Create the bar chart
 ggplot(top_counties, aes(x = reorder(County, -Charging_Stations), y = Charging_Stations, fill = County)) +
@@ -515,6 +445,3 @@ The above visualization highlights the disparities that exist geographically in 
 
 
 
-
-
->>>>>>> 1e229d245aa33127b9c3a0d22d8fed6ae63c5a7a
