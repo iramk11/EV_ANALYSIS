@@ -6,8 +6,8 @@ Electric Vehicle Population data will be used to analyze the trends of distribut
 
 - What are the most popular EV models? 
 
-- How do electric ranges and costs vary across regions? 
+- How have electric vehicle (EV) registrations changed over time? 
 
-- What geographic patterns emerge in EV adoption? 
+- How do the battery ranges of electric vehicles vary across different manufacturers? 
 
 This analysis will highlight a few major driving factors in the adoption of EVs and what challenges are to be met for such wide usage. By analyzing this dataset, we hope to find meaningful insights that will assist policymakers, utility companies, and carmakers in accelerating the process of electric vehicle adaptation.
