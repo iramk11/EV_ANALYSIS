@@ -189,16 +189,32 @@ function drawChart(data, colors, isDetailed) {
     .attr("fill", (d, i) => colors(i))
     .on("mouseover", function(event, d) {
       d3.select(this).transition().duration(200).attr("d", arcHover);
+      
+      // Show tooltip with the label and value
       tooltip.style("display", "block")
         .html(`<strong>${d.data.category}</strong><br>Count: ${d.data.value}`);
+      
+      // Display the label and value directly on the segment
+      g.append("text")
+        .attr("class", "hover-label")
+        .attr("text-anchor", "middle")
+        .attr("x", arc.centroid(d)[0])
+        .attr("y", arc.centroid(d)[1])
+        .style("font-size", "14px")
+        .style("font-weight", "bold")
+        .text(`${d.data.category}: ${d.data.value}`);
     })
     .on("mousemove", function(event) {
+      // Move tooltip with mouse
       tooltip.style("top", (event.pageY + 10) + "px")
         .style("left", (event.pageX + 10) + "px");
     })
     .on("mouseout", function() {
       d3.select(this).transition().duration(200).attr("d", arc);
+      
+      // Hide tooltip and remove hover label
       tooltip.style("display", "none");
+      g.selectAll(".hover-label").remove();
     })
     .on("click", (event, d) => {
       if (!isDetailed) drawDetailedChart(d.data.category);
@@ -209,6 +225,7 @@ function drawChart(data, colors, isDetailed) {
   // Show or hide "Back" button
   backButton.style("display", isDetailed ? "block" : "none");
 }
+
 
 // Draw initial chart
 function drawInitialChart() {
