@@ -29,7 +29,7 @@ ev_data <- read.csv("Electric_Vehicle_Population_Data.csv"))
 # Load spatial data for Washington counties
 # Fetch shapefile for Washington State counties
 suppressMessages(
-wa_counties <- counties(state = "WA", cb = TRUE, year = 2022))
+wa_counties <- counties(state = "WA", cb = TRUE, year = 2022, progress=FALSE))
 
 
 
