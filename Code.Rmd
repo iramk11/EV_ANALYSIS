@@ -1,5 +1,10 @@
+---
+title: "Code"
+output: html_notebook
+---
+
 # Results
-```{r, warning=FALSE}
+```{r}
 suppressPackageStartupMessages({
   library(ggplot2)
   library(dplyr)
@@ -16,7 +21,7 @@ suppressPackageStartupMessages({
    # For spatial data
 
 ```
-```{r, warning=FALSE}
+```{r}
 suppressMessages(
 ev_data <- read.csv("Electric_Vehicle_Population_Data.csv"))
 
@@ -25,7 +30,7 @@ ev_data <- read.csv("Electric_Vehicle_Population_Data.csv"))
 
 
 
-```{r, warning=FALSE}
+```{r}
 # Load spatial data for Washington counties
 # Fetch shapefile for Washington State counties
 suppressMessages(
@@ -42,7 +47,7 @@ county_ev_counts <- ev_data %>%
 ```
 
 **Which counties in Washington state have the highest and lowest concentrations of EV registrations?**
-```{r, warning=FALSE}
+```{r}
 
 # Generate qualitative color mapping based on EV_Count categories
 wa_ev_map <- wa_counties %>%
@@ -85,7 +90,7 @@ The geographic distribution of electric vehicle (EV) registrations in Washington
 
 **What is the relative contribution of the top EV makes to the total electric vehicle market in Washington State?**
 
-```{r, warning=FALSE}
+```{r}
 
 library(ggplot2)
 library(dplyr)
@@ -119,7 +124,7 @@ The graph illustrates the contribution of different car manufacturers to the tot
 
 
 **How has the battery range of electric vehicles evolved across different model years in Washington State?**
-```{r, warning=FALSE}
+```{r}
 # Ensure Electric.Range is numeric
 ev_data$Electric.Range <- as.numeric(ev_data$Electric.Range)
 
@@ -147,7 +152,7 @@ It is a scatter of the ranges of electric vehicle batteries, in miles, over vari
 
 
 **How does the average electric range of vehicles vary by make, and how do Battery Electric Vehicles (BEVs) compare to Plug-in Hybrid Electric Vehicles (PHEVs) across different manufacturers?  **
-```{r, warning=FALSE}
+```{r}
 
 # Filter data for valid electric range and non-missing counties
 ev_filtered <- ev_data %>%
@@ -179,7 +184,7 @@ Below is the Cleveland dot plot of average electric range for the vehicles by ma
 
 **Which vehicle manufacturers are the most popular among electric vehicle registrations in the state of Washington?**
 
-```{r, warning=FALSE}
+```{r}
 # Bar Chart of Vehicle Make Distribution
 ggplot(ev_data, aes(x = reorder(Make, -table(Make)[Make]))) +
   geom_bar(fill = "steelblue") +
@@ -196,7 +201,7 @@ This bar graph shows how highly concentrated the structure of EVs' registrations
 
 ***What is the percentage share of each electric vehicle model among all EV registrations in the dataset?**
 
-```{r, warning=FALSE}
+```{r}
 model_data <- ev_data %>%
   count(Model, name = "Registrations") %>%
   arrange(desc(Registrations)) %>%
@@ -231,7 +236,7 @@ This graph depicts consumer preference, pointing out Tesla at the top-most posit
 
 **How have electric vehicle (EV) registrations changed over time?**
 
-```{r, warning=FALSE}
+```{r}
 # Filter out year 2025 and aggregate data by Model Year
 yearly_data <- ev_data %>%
   filter(Model.Year != 2025) %>% # Exclude year 2025
@@ -262,7 +267,7 @@ As such, a decline follows the peak year represented-2024 in the graph-maybe bec
 
 **How have the top 5 electric vehicle (EV) makes performed in terms of annual over time? **
 
-```{r, warning=FALSE}
+```{r}
 time_series_data <- ev_data %>%
   filter(!is.na(Make) & !is.na(Model.Year) & Model.Year > 0 & Model.Year < 2025) %>% # Exclude 2025
   count(Make, Model.Year, name = "Count") %>%
@@ -302,7 +307,7 @@ The following is a time series plot showing electric vehicle registration by the
 
 **Which models are most popular for each vehicle manufacturer (make)?**
 
-```{r, warning=FALSE}
+```{r}
 
 heatmap_data <- ev_data %>%
   count(Make, Model, name = "Registrations") %>%
@@ -337,7 +342,7 @@ Thus, the map represents the variety within the EV market-for example, Kia by So
 
 
 **What factors might be contributing to the significant variation in EV adoption rates across different counties in Washington State, and what targeted strategies could be implemented to encourage higher adoption in rural areas?**
-```{r, warning=FALSE}
+```{r}
 library(tigris)
 library(sf)
 library(dplyr)
@@ -390,7 +395,7 @@ The geographic distribution of EV adoption in Washington State, as depicted in t
 In contrast, the lighter shades in rural counties indicate significantly lower EV adoption levels, which can be attributed to factors such as limited charging station availability, lower population densities, and possibly fewer incentives or awareness campaigns in these areas. The map emphasizes the need for targeted infrastructure development and policy support to encourage EV adoption in less-populated counties, reducing disparities and enhancing statewide sustainability efforts.
 
 **How do the battery ranges of electric vehicles vary across different manufacturers?**
-```{r, warning=FALSE}
+```{r}
 
 # Clean the data: Remove rows with 0 or missing Electric Range
 cleaned_data <- ev_data %>%
@@ -419,7 +424,7 @@ By contrast, the other manufacturers-Fiat, MINI, and Mitsubishi-return fairly sh
 
 **How are EV charging stations distributed across counties in the dataset?**
 
-```{r, warning=FALSE}
+```{r}
 
 top_counties <- ev_data %>%
   count(County, name = "Charging_Stations") %>%
@@ -446,6 +451,7 @@ ggplot(top_counties, aes(x = reorder(County, -Charging_Stations), y = Charging_S
 The bar chart represents the number of electric vehicle-charging stations across the state of Washington, focusing on the top 10 counties. Against the rest of the counties, King County stands at a very high level regarding the number of charging stations, which shows its centrality with respect to this issue. The rest, in order of numbers, are Snohomish and Pierce counties, though their totals are far fewer, meaning infrastructure in highly urbanized, densely populated areas is concentrated. In the middle-range counties, there is Clark, Thurston, and Kitsap. Spokane, Whatcom, Benton, and Skagit, and their contribution becomes disproportionately smaller compared to the previous ones.
 
 This also highlights the disparities that exist geographically in the state's EV charging infrastructure. King County's preeminence speaks to its urban nature and likely higher rates of EV adoption, favored by both government incentives and private investment. For this project, understanding this distribution is important in identifying areas that are not well served and should factor into an expansion strategy of the EV charging network. These disparities, if addressed, can facilitate broader EV adoption and support statewide sustainability goals.
+
 
 
 
